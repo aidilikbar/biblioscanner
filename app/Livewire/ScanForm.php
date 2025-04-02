@@ -12,6 +12,7 @@ use App\Services\OpenAIService;
 #[WithFileUploads(disk: 'livewire-tmp')]
 class ScanForm extends Component
 {
+    use WithFileUploads;
     public $file;
     public $scan;
 
