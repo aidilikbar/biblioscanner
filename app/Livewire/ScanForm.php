@@ -12,6 +12,7 @@ use App\Services\OpenAIService;
 class ScanForm extends Component
 {
     use WithFileUploads;
+
     public $file;
     public $scan;
 
@@ -22,49 +23,71 @@ class ScanForm extends Component
 
     public function upload(OpenAIService $openai)
     {
+        logger('📥 upload() method triggered');
+
         $this->validate([
             'file' => 'required|mimes:pdf|max:5120',
         ]);
 
-        // 1. Upload to DigitalOcean Spaces
-        $fileName = time() . '_' . Str::slug($this->file->getClientOriginalName()) . '.pdf';
-        $filePath = $this->file->storeAs('scans', $fileName, 'spaces');
-        $fileUrl = Storage::disk('spaces')->url($filePath);
+        try {
+            // 1. Upload to DigitalOcean Spaces
+            $fileName = time() . '_' . Str::slug($this->file->getClientOriginalName()) . '.pdf';
+            $filePath = $this->file->storeAs('scans', $fileName, 'spaces');
+            $fileUrl = Storage::disk('spaces')->url($filePath);
 
-        // 2. Download from Spaces and store locally (for OpenAI)
-        $fileContent = Storage::disk('spaces')->get($filePath);
-        $tmpPath = storage_path("app/tmp/{$fileName}");
-        Storage::disk('local')->put("tmp/{$fileName}", $fileContent);
+            logger('✅ Uploaded to Spaces', [
+                'file_name' => $fileName,
+                'file_path' => $filePath,
+                'file_url' => $fileUrl,
+            ]);
 
-        // 3. Upload to OpenAI from local temp file
-        $openaiFileId = $openai->uploadFile($tmpPath, $fileName);
+            // 2. Download from Spaces
+            $fileContent = Storage::disk('spaces')->get($filePath);
+            $tmpPath = storage_path("app/tmp/{$fileName}");
+            Storage::disk('local')->put("tmp/{$fileName}", $fileContent);
 
-        // 4. (Optional) Remove local temp file
-        Storage::disk('local')->delete("tmp/{$fileName}");
+            logger('📂 Saved temp file locally for OpenAI', ['tmp_path' => $tmpPath]);
 
-        // 5. Dummy text for now — replace with actual PDF parsing later
-        $excerpt = "Cracking the Code of Change by Michael Beer and Nitin Nohria...";
+            // 3. Upload to OpenAI
+            $openaiFileId = $openai->uploadFile($tmpPath, $fileName);
+            logger('🚀 Uploaded to OpenAI', ['openai_file_id' => $openaiFileId]);
 
-        // 6. Get citation + summary
-        $meta = $openai->extractMetadata($excerpt);
-        $citation = $this->extractCitation($meta['metadata'] ?? '');
-        $summary = $this->extractSummary($meta['metadata'] ?? '');
+            // 4. Cleanup local file
+            Storage::disk('local')->delete("tmp/{$fileName}");
 
-        // 7. Get recommendations
-        $recs = $openai->getRecommendations($summary ?? $excerpt);
-        $recommendations = $recs['recommendations'] ?? null;
+            // 5. Dummy excerpt (replace with PDF parsing later)
+            $excerpt = "Cracking the Code of Change by Michael Beer and Nitin Nohria...";
 
-        // 8. Save to database
-        $this->scan = Scan::create([
-            'user_id' => auth()->id(),
-            'file_name' => $fileName,
-            'file_path' => $filePath,
-            'file_url' => $fileUrl,
-            'openai_file_id' => $openaiFileId,
-            'citation' => $citation,
-            'summary' => $summary,
-            'recommendations' => $recommendations,
-        ]);
+            // 6. Metadata
+            $meta = $openai->extractMetadata($excerpt);
+            logger('📄 Metadata response', ['meta' => $meta]);
+
+            $citation = $this->extractCitation($meta['metadata'] ?? '');
+            $summary = $this->extractSummary($meta['metadata'] ?? '');
+
+            // 7. Recommendations
+            $recs = $openai->getRecommendations($summary ?? $excerpt);
+            logger('📚 Recommendations response', ['recs' => $recs]);
+
+            $recommendations = $recs['recommendations'] ?? null;
+
+            // 8. Save to DB
+            $this->scan = Scan::create([
+                'user_id' => auth()->id(),
+                'file_name' => $fileName,
+                'file_path' => $filePath,
+                'file_url' => $fileUrl,
+                'openai_file_id' => $openaiFileId,
+                'citation' => $citation,
+                'summary' => $summary,
+                'recommendations' => $recommendations,
+            ]);
+
+            logger('✅ Scan saved to database', ['scan_id' => $this->scan->id]);
+        } catch (\Throwable $e) {
+            logger('❌ Error in upload()', ['message' => $e->getMessage()]);
+            $this->addError('file', 'Something went wrong. Please try again.');
+        }
     }
 
     private function extractCitation(string $text): ?string
