@@ -3,7 +3,7 @@
 namespace App\Livewire;
 
 use Livewire\Component;
-use Livewire\WithFileUploads;
+use Livewire\Attributes\WithFileUploads;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Scan;
@@ -12,8 +12,6 @@ use App\Services\OpenAIService;
 #[WithFileUploads(disk: 'livewire-tmp')]
 class ScanForm extends Component
 {
-    use WithFileUploads;
-
     public $file;
     public $scan;
 
@@ -28,22 +26,35 @@ class ScanForm extends Component
             'file' => 'required|mimes:pdf|max:5120',
         ]);
 
+        // 1. Upload to DigitalOcean Spaces
         $fileName = time() . '_' . Str::slug($this->file->getClientOriginalName()) . '.pdf';
         $filePath = $this->file->storeAs('scans', $fileName, 'spaces');
-        $fileUrl = Storage::disk('spaces')->url($filePath); 
+        $fileUrl = Storage::disk('spaces')->url($filePath);
 
-        $openaiFileId = $openai->uploadFile(storage_path("app/public/{$filePath}"), $fileName);
+        // 2. Download from Spaces and store locally (for OpenAI)
+        $fileContent = Storage::disk('spaces')->get($filePath);
+        $tmpPath = storage_path("app/tmp/{$fileName}");
+        Storage::disk('local')->put("tmp/{$fileName}", $fileContent);
 
-        // NOTE: You can integrate real PDF parser here
+        // 3. Upload to OpenAI from local temp file
+        $openaiFileId = $openai->uploadFile($tmpPath, $fileName);
+
+        // 4. (Optional) Remove local temp file
+        Storage::disk('local')->delete("tmp/{$fileName}");
+
+        // 5. Dummy text for now — replace with actual PDF parsing later
         $excerpt = "Cracking the Code of Change by Michael Beer and Nitin Nohria...";
 
+        // 6. Get citation + summary
         $meta = $openai->extractMetadata($excerpt);
         $citation = $this->extractCitation($meta['metadata'] ?? '');
         $summary = $this->extractSummary($meta['metadata'] ?? '');
 
+        // 7. Get recommendations
         $recs = $openai->getRecommendations($summary ?? $excerpt);
         $recommendations = $recs['recommendations'] ?? null;
 
+        // 8. Save to database
         $this->scan = Scan::create([
             'user_id' => auth()->id(),
             'file_name' => $fileName,

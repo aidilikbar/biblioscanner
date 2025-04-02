@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class OpenAIService
 {
@@ -15,19 +16,25 @@ class OpenAIService
         $this->apiBase = 'https://api.openai.com/v1';
     }
 
-    public function uploadFile($filePath, $fileName): ?string
+    public function uploadFile(string $filePath, string $fileName): ?string
     {
-        $response = Http::withToken($this->apiKey)
-            ->attach('file', file_get_contents($filePath), $fileName)
-            ->post($this->apiBase . '/files', [
-                'purpose' => 'assistants',
-            ]);
+        try {
+            $response = Http::withToken($this->apiKey)
+                ->timeout(30)
+                ->attach('file', file_get_contents($filePath), $fileName)
+                ->post($this->apiBase . '/files', [
+                    'purpose' => 'assistants',
+                ]);
 
-        if ($response->successful()) {
-            return $response->json('id');
+            if ($response->successful()) {
+                return $response->json('id');
+            }
+
+            Log::error('OpenAI file upload failed', ['response' => $response->json()]);
+        } catch (\Throwable $e) {
+            Log::error('OpenAI file upload error', ['exception' => $e->getMessage()]);
         }
 
-        logger()->error('OpenAI File Upload Failed', ['error' => $response->json()]);
         return null;
     }
 
@@ -48,12 +55,24 @@ class OpenAIService
             ],
         ];
 
-        $response = Http::withToken($this->apiKey)
-            ->post($this->apiBase . '/chat/completions', $payload);
+        try {
+            $response = Http::withToken($this->apiKey)
+                ->timeout(60)
+                ->post($this->apiBase . '/chat/completions', $payload);
 
-        return $response->successful()
-            ? ['metadata' => $response->json('choices.0.message.content')]
-            : ['error' => $response->json()];
+            if ($response->successful()) {
+                return [
+                    'metadata' => $response->json('choices.0.message.content'),
+                    'error' => null,
+                ];
+            }
+
+            Log::error('OpenAI metadata extraction failed', ['response' => $response->json()]);
+            return ['metadata' => null, 'error' => $response->json()];
+        } catch (\Throwable $e) {
+            Log::error('OpenAI metadata exception', ['exception' => $e->getMessage()]);
+            return ['metadata' => null, 'error' => $e->getMessage()];
+        }
     }
 
     public function getRecommendations(string $summary): array
@@ -66,7 +85,7 @@ class OpenAIService
             'messages' => [
                 [
                     'role' => 'system',
-                    'content' => "You are an expert in academic research and change management. Based on user input, suggest high-quality journal articles and books related to organizational change, especially around Theory E and Theory O. Limit your suggestions to 2 per category. Use clear formatting with these fields for each:\n\n- Title\n- Author(s), Year (APA format)\n- Description\n- Link (if available)\n\nUse the headings: JOURNAL ARTICLES and BOOKS."
+                    'content' => "You are an expert in academic research and change management. Based on user input, suggest high-quality journal articles and books related to organizational change, especially around Theory E and Theory O. Limit your suggestions to 2 per category. Use clear formatting with these fields:\n\n- Title\n- Author(s), Year (APA format)\n- Description\n- Link (if available)\n\nUse the headings: JOURNAL ARTICLES and BOOKS."
                 ],
                 [
                     'role' => 'user',
@@ -75,11 +94,23 @@ class OpenAIService
             ],
         ];
 
-        $response = Http::withToken($this->apiKey)
-            ->post($this->apiBase . '/chat/completions', $payload);
+        try {
+            $response = Http::withToken($this->apiKey)
+                ->timeout(60)
+                ->post($this->apiBase . '/chat/completions', $payload);
 
-        return $response->successful()
-            ? ['recommendations' => $response->json('choices.0.message.content')]
-            : ['error' => $response->json()];
+            if ($response->successful()) {
+                return [
+                    'recommendations' => $response->json('choices.0.message.content'),
+                    'error' => null,
+                ];
+            }
+
+            Log::error('OpenAI recommendation generation failed', ['response' => $response->json()]);
+            return ['recommendations' => null, 'error' => $response->json()];
+        } catch (\Throwable $e) {
+            Log::error('OpenAI recommendation exception', ['exception' => $e->getMessage()]);
+            return ['recommendations' => null, 'error' => $e->getMessage()];
+        }
     }
 }
