@@ -26,7 +26,8 @@ class ScanController extends Controller
         // Store uploaded file locally
         $uploadedFile = $request->file('file');
         $fileName = time() . '_' . Str::slug(pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME)) . '.pdf';
-        $filePath = $uploadedFile->storeAs('scans', $fileName, 'public');
+        $filePath = $uploadedFile->storeAs('scans', $fileName, 'spaces');
+        $fileUrl = Storage::disk('spaces')->url($filePath);
 
         // Upload to OpenAI
         $openaiFileId = $openai->uploadFile(storage_path("app/public/{$filePath}"), $fileName);
