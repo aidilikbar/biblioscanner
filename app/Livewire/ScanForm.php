@@ -28,7 +28,8 @@ class ScanForm extends Component
         ]);
 
         $fileName = time() . '_' . Str::slug($this->file->getClientOriginalName()) . '.pdf';
-        $filePath = $this->file->storeAs('scans', $fileName, 'public');
+        $filePath = $this->file->storeAs('scans', $fileName, 'spaces');
+        $fileUrl = Storage::disk('spaces')->url($filePath); 
 
         $openaiFileId = $openai->uploadFile(storage_path("app/public/{$filePath}"), $fileName);
 
@@ -46,6 +47,7 @@ class ScanForm extends Component
             'user_id' => auth()->id(),
             'file_name' => $fileName,
             'file_path' => $filePath,
+            'file_url' => $fileUrl,
             'openai_file_id' => $openaiFileId,
             'citation' => $citation,
             'summary' => $summary,

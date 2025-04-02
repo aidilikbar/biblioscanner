@@ -13,6 +13,7 @@ class Scan extends Model
         'user_id',
         'file_name',
         'file_path',
+        'file_url', 
         'openai_file_id',
         'citation',
         'summary',

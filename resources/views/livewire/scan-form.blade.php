@@ -9,28 +9,44 @@
         <button type="submit"
             class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
             wire:loading.attr="disabled"
-            wire:target="file"
-            @if (!$file) disabled @endif>
-            Scan
+            wire:target="upload">
+            📤 Scan
         </button>
 
-        @if ($file)
-            <p class="text-sm text-gray-500 mt-2">Selected: {{ $file->getClientOriginalName() }}</p>
-        @endif
+        <div wire:loading wire:target="upload" class="text-sm text-gray-500 mt-2">
+            ⏳ Scanning document with AI...
+        </div>
     </form>
 
     <hr class="my-6">
 
     @if ($scan)
-        <div class="bg-white rounded shadow p-4">
-            <h2 class="text-xl font-bold mb-2">📄 Citation</h2>
-            <p class="mb-4 text-gray-700">{{ $scan->citation }}</p>
+        <div class="bg-white rounded shadow p-6 space-y-6">
 
-            <h2 class="text-xl font-bold mb-2">📝 Summary</h2>
-            <p class="mb-4 text-gray-700">{{ $scan->summary }}</p>
+            @if ($scan->file_url)
+                <div>
+                    <a href="{{ $scan->file_url }}" target="_blank" class="text-blue-600 underline">
+                        📄 View Uploaded PDF
+                    </a>
+                </div>
+            @endif
 
-            <h2 class="text-xl font-bold mb-2">📚 Recommendations</h2>
-            <pre class="bg-gray-100 p-3 rounded text-sm whitespace-pre-wrap">{{ $scan->recommendations }}</pre>
+            <div>
+                <h2 class="text-xl font-bold mb-2">📄 APA Citation</h2>
+                <p class="text-gray-700">{{ $scan->citation }}</p>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-bold mb-2">📝 Summary</h2>
+                <p class="text-gray-700">{{ $scan->summary }}</p>
+            </div>
+
+            <div>
+                <h2 class="text-xl font-bold mb-2">📚 Recommendations</h2>
+                <pre class="bg-gray-100 p-3 rounded text-sm whitespace-pre-wrap text-gray-800">
+{{ $scan->recommendations }}
+                </pre>
+            </div>
         </div>
     @endif
 </div>
