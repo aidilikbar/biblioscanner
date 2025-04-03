@@ -32,7 +32,7 @@ class ScanForm extends Component
         try {
             // 1. Upload to DigitalOcean Spaces
             $fileName = time() . '_' . Str::slug($this->file->getClientOriginalName()) . '.pdf';
-            $filePath = $this->file->storeAs('scans', $fileName, 'spaces');
+            $filePath = $this->file->storeAs('scans', $fileName, 'local');
             $fileUrl = Storage::disk('spaces')->url($filePath);
 
             logger('✅ Uploaded to Spaces', [
