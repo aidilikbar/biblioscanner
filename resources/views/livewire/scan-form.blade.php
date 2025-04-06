@@ -6,7 +6,7 @@
 
         <div>
             <label class="block font-semibold mb-1">Select a PDF File</label>
-            <input type="file" wire:model="file" class="block w-full border rounded p-2" accept="application/pdf">
+            <input type="file" wire:model.defer="file" class="block w-full border rounded p-2" accept="application/pdf">
             @error('file') <span class="text-red-600 text-sm">{{ $message }}</span> @enderror
         </div>
 

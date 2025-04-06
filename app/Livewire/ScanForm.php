@@ -21,26 +21,18 @@ class ScanForm extends Component
 
     public function upload()
     {
-        $this->validate([
-            'file' => 'required|mimes:pdf|max:5120',
-        ]);
+        logger('🔥 Upload method triggered');
 
-        $this->citation = "Beer, M., & Nohria, N. (2000). Cracking the code of change. *Harvard Business Review*, 78(3), 133–141.";
-
-        $this->summary = "This article introduces two contrasting theories of change: Theory E (focused on economic value and shareholder returns) and Theory O (focused on building organizational culture and human capability)...";
-
+        $this->citation = "Beer, M., & Nohria, N. (2000). Cracking the Code of Change. Harvard Business Review, 78(3), 133–141.";
+        $this->summary = "This paper contrasts Theory E (economic value) and Theory O (organizational capability) in managing change. It argues for an integrated approach combining both.";
         $this->recommendations = <<<TEXT
-    JOURNAL ARTICLES
+    📘 JOURNAL ARTICLES:
+    1. Kotter, J. P. (1995). Leading Change: Why Transformation Efforts Fail. HBR.
+    2. Nadler, D. A., & Tushman, M. L. (1997). Competing by Design.
 
-    1. Kotter, J. P. (1995). Leading change: Why transformation efforts fail. *Harvard Business Review*, 73(2), 59–67.
-
-    2. Beer, M., & Nohria, N. (2000). Breaking the code of change. *Harvard Business Review*, 78(3), 133–141.
-
-    BOOKS
-
-    1. Kotter, J. P. (2012). *Leading Change*. Harvard Business Review Press.
-
-    2. Collins, J., & Porras, J. I. (2004). *Built to Last*. HarperBusiness.
+    📚 BOOKS:
+    1. Kotter, J. P. (2012). Leading Change.
+    2. Collins, J., & Porras, J. (2004). Built to Last.
     TEXT;
     }
 }
