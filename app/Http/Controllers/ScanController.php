@@ -30,7 +30,7 @@ class ScanController extends Controller
         $citation = "Beer, M., & Nohria, N. (2000). Cracking the code of change. Harvard Business Review, 78(3), 133–141. https://hbr.org/2000/05/cracking-the-code-of-change";
         $summary = "The paper explores the contrasting approaches of Theory E (focused on economic value and top-down change) and Theory O (centered on organizational capability and employee engagement) in managing change. It advocates for an integrated strategy that leverages the strengths of both models to achieve sustainable transformation.";
         $recommendations = <<<TEXT
-📘 JOURNAL ARTICLES:
+JOURNALS:
 <strong>1. Kotter, J. P. (1995). Leading change: Why transformation efforts fail. Harvard Business Review, 73(2), 59–67.</strong>
 DOI: [N/A - HBR articles typically don’t have DOIs]
 Kotter outlines an eight-step model for successful organizational transformation. It supports Theory O’s emphasis on building internal capability and culture, while warning against short-term fixes often aligned with Theory E. This article is a staple for change leaders seeking sustainable outcomes.
@@ -40,7 +40,7 @@ ISBN: 9780195116489
 This work offers a framework for aligning organizational components such as strategy, structure, and culture — directly complementing Beer & Nohria’s integration of Theory E and O. It’s particularly relevant for organizations aiming to balance performance and human capital.
 
 
-📚 BOOKS:
+BOOKS:
 <strong>1. Kotter, J. P. (2012). Leading change (Rev. ed.). Harvard Business Review Press.</strong>
 ISBN: 9781422186435
 An expanded version of the 1995 HBR article, this book dives deeper into each of Kotter’s eight steps. It aligns well with Theory O’s structured yet people-centered change processes and offers practical tools for change leadership in dynamic environments.
