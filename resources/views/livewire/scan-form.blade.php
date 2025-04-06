@@ -18,21 +18,22 @@
                 📤 Scan
             </button>
 
-            <div class="text-sm text-green-600 mt-4">
-                <p>📄 File: {{ $file ? $file->getClientOriginalName() : 'No file uploaded' }}</p>
-                <p>📌 Citation: {{ $citation ? 'SET ✅' : 'NOT SET ❌' }}</p>
-                <p>📌 Summary: {{ $summary ? 'SET ✅' : 'NOT SET ❌' }}</p>
-            </div>
-
             <span wire:loading wire:target="upload" class="text-gray-600 text-sm">
                 ⏳ Processing...
             </span>
+        </div>
+
+        {{-- Debug output (optional) --}}
+        <div class="text-sm text-green-600 mt-4">
+            <p>📁 File: {{ $file ? $file->getClientOriginalName() : 'No file selected' }}</p>
+            <p>📌 Citation: {{ $citation ? 'SET ✅' : 'NOT SET ❌' }}</p>
+            <p>📌 Summary: {{ $summary ? 'SET ✅' : 'NOT SET ❌' }}</p>
         </div>
     </form>
 
     {{-- Display Results --}}
     @if ($citation || $summary || $recommendations)
-        <div class="bg-white rounded shadow p-6 space-y-6 border border-gray-100">
+        <div class="bg-white rounded shadow p-6 space-y-6 border border-gray-100 mt-6">
 
             @if ($citation)
                 <div>
