@@ -5,7 +5,7 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('scan') }}">
+                    <a href="{{ route('scan.index') }}">
                         <i class="fas fa-books text-indigo-600 text-2xl"></i> BiblioScanner
                     </a>
                 </div>
