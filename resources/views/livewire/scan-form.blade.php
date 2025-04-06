@@ -19,39 +19,38 @@
             </button>
 
             <span wire:loading wire:target="upload" class="text-gray-600 text-sm">
-                ⏳ Processing with AI...
+                ⏳ Processing...
             </span>
         </div>
     </form>
 
-    {{-- Results --}}
-    @if ($scan)
+    {{-- Display Results --}}
+    @if ($citation || $summary || $recommendations)
         <div class="bg-white rounded shadow p-6 space-y-6 border border-gray-100">
 
-            @if ($scan->file_url)
+            @if ($citation)
                 <div>
-                    <a href="{{ $scan->file_url }}" target="_blank" class="text-blue-600 underline font-medium">
-                        📎 View Uploaded PDF
-                    </a>
+                    <h2 class="text-xl font-bold mb-2">📄 APA Citation</h2>
+                    <p class="text-gray-800">{{ $citation }}</p>
                 </div>
             @endif
 
-            <div>
-                <h2 class="text-xl font-bold mb-2">📄 APA Citation</h2>
-                <p class="text-gray-800">{{ $scan->citation }}</p>
-            </div>
-
-            <div>
-                <h2 class="text-xl font-bold mb-2">📝 Summary</h2>
-                <p class="text-gray-800">{{ $scan->summary }}</p>
-            </div>
-
-            <div>
-                <h2 class="text-xl font-bold mb-2">📚 Recommendations</h2>
-                <div class="bg-gray-50 p-4 rounded text-sm text-gray-900 whitespace-pre-wrap">
-                    {{ $scan->recommendations }}
+            @if ($summary)
+                <div>
+                    <h2 class="text-xl font-bold mb-2">📝 Summary</h2>
+                    <p class="text-gray-800">{{ $summary }}</p>
                 </div>
-            </div>
+            @endif
+
+            @if ($recommendations)
+                <div>
+                    <h2 class="text-xl font-bold mb-2">📚 Recommendations</h2>
+                    <div class="bg-gray-50 p-4 rounded text-sm text-gray-900 whitespace-pre-wrap">
+                        {{ $recommendations }}
+                    </div>
+                </div>
+            @endif
+
         </div>
     @endif
 

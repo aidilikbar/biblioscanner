@@ -4,105 +4,49 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-use App\Models\Scan;
-use App\Services\OpenAIService;
 
 class ScanForm extends Component
 {
     use WithFileUploads;
 
     public $file;
-    public $scan;
+    public $citation;
+    public $summary;
+    public $recommendations;
 
     public function render()
     {
         return view('livewire.scan-form');
     }
 
-    public function upload(OpenAIService $openai)
+    public function upload()
     {
-        logger('📥 upload() method triggered');
-
         $this->validate([
             'file' => 'required|mimes:pdf|max:5120',
         ]);
 
-        try {
-            // 1. Upload to DigitalOcean Spaces
-            $fileName = time() . '_' . Str::slug($this->file->getClientOriginalName()) . '.pdf';
-            $filePath = $this->file->storeAs('scans', $fileName, 'local');
-            $fileUrl = Storage::disk('spaces')->url($filePath);
+        // Simulate upload success — no actual saving needed for MVP
+        $this->citation = "Beer, M., & Nohria, N. (2000). Cracking the code of change. *Harvard Business Review*, 78(3), 133–141.";
 
-            logger('✅ Uploaded to Spaces', [
-                'file_name' => $fileName,
-                'file_path' => $filePath,
-                'file_url' => $fileUrl,
-            ]);
+        $this->summary = "This article introduces two contrasting theories of change: Theory E (focused on economic value and shareholder returns) and Theory O (focused on building organizational culture and human capability). The authors argue that successful transformation requires integrating both approaches to avoid failure and build sustainable advantage. Case examples from Scott Paper, Champion International, and ASDA are used to illustrate the dynamics of each strategy.";
 
-            // 2. Download from Spaces
-            $fileContent = Storage::disk('spaces')->get($filePath);
-            $tmpPath = storage_path("app/tmp/{$fileName}");
-            Storage::disk('local')->put("tmp/{$fileName}", $fileContent);
+        $this->recommendations = <<<TEXT
+JOURNAL ARTICLES
 
-            logger('📂 Saved temp file locally for OpenAI', ['tmp_path' => $tmpPath]);
+1. Kotter, J. P. (1995). Leading change: Why transformation efforts fail. *Harvard Business Review*, 73(2), 59–67.  
+   - Describes an 8-step process for successful organizational change and why many efforts fail.  
+   - [Link](https://hbr.org/1995/05/leading-change-why-transformation-efforts-fail)
 
-            // 3. Upload to OpenAI
-            $openaiFileId = $openai->uploadFile($tmpPath, $fileName);
-            logger('🚀 Uploaded to OpenAI', ['openai_file_id' => $openaiFileId]);
+2. Beer, M., & Nohria, N. (2000). Breaking the code of change. *Harvard Business Review*, 78(3), 133–141.  
+   - A companion piece diving deeper into integrating Theory E and Theory O.  
 
-            // 4. Cleanup local file
-            Storage::disk('local')->delete("tmp/{$fileName}");
+BOOKS
 
-            // 5. Dummy excerpt (replace with PDF parsing later)
-            $excerpt = "Cracking the Code of Change by Michael Beer and Nitin Nohria...";
+1. Kotter, J. P. (2012). *Leading Change*. Harvard Business Review Press.  
+   - A foundational book on how to manage change effectively through structure and culture.
 
-            // 6. Metadata
-            $meta = $openai->extractMetadata($excerpt);
-            logger('📄 Metadata response', ['meta' => $meta]);
-
-            $citation = $this->extractCitation($meta['metadata'] ?? '');
-            $summary = $this->extractSummary($meta['metadata'] ?? '');
-
-            // 7. Recommendations
-            $recs = $openai->getRecommendations($summary ?? $excerpt);
-            logger('📚 Recommendations response', ['recs' => $recs]);
-
-            $recommendations = $recs['recommendations'] ?? null;
-
-            // 8. Save to DB
-            $this->scan = Scan::create([
-                'user_id' => auth()->id(),
-                'file_name' => $fileName,
-                'file_path' => $filePath,
-                'file_url' => $fileUrl,
-                'openai_file_id' => $openaiFileId,
-                'citation' => $citation,
-                'summary' => $summary,
-                'recommendations' => $recommendations,
-            ]);
-
-            logger('✅ Scan saved to database', ['scan_id' => $this->scan->id]);
-        } catch (\Throwable $e) {
-            logger('❌ Error in upload()', ['message' => $e->getMessage()]);
-            $this->addError('file', 'Something went wrong. Please try again.');
-        }
-    }
-
-    private function extractCitation(string $text): ?string
-    {
-        if (preg_match('/(?<citation>.+?\(\d{4}\).+?\.)/', $text, $match)) {
-            return $match['citation'];
-        }
-
-        return null;
-    }
-
-    private function extractSummary(string $text): ?string
-    {
-        $lines = explode("\n", trim($text));
-        $filtered = array_filter($lines, fn($line) => !str_contains($line, 'Citation'));
-        return implode(" ", array_slice($filtered, 1));
+2. Collins, J., & Porras, J. I. (2004). *Built to Last: Successful Habits of Visionary Companies*. HarperBusiness.  
+   - Discusses the importance of values and culture in building enduring organizations.
+TEXT;
     }
 }
