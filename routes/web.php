@@ -11,7 +11,7 @@ Route::get('/', function () {
 */
 
 Route::get('/', function () {
-    return redirect()->route('scan.index');
+    return redirect()->route('scan');
 });
 
 Route::get('/dashboard', function () {
