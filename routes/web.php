@@ -4,8 +4,14 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScanController;
 use Illuminate\Support\Facades\Route;
 
+/*
 Route::get('/', function () {
     return view('welcome');
+});
+*/
+
+Route::get('/', function () {
+    return redirect()->route('scan.index');
 });
 
 Route::get('/dashboard', function () {
@@ -18,8 +24,13 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+/*
 Route::get('/', [ScanController::class, 'index'])->name('scan.index');
 Route::post('/', [ScanController::class, 'store'])->name('scan.store');
+*/
+
+Route::get('/scan', [ScanController::class, 'index'])->name('scan.index');
+Route::post('/scan', [ScanController::class, 'store'])->name('scan.store');
 
 Route::get('/test', function () {
     return view('test-livewire');

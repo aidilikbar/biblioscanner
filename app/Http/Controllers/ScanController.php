@@ -3,80 +3,47 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Scan;
-use Illuminate\Support\Facades\Storage;
-use App\Services\OpenAIService;
-use Illuminate\Support\Str;
 
 class ScanController extends Controller
 {
     public function index()
     {
-        // Show the form with the latest scan result (optional)
-        $scan = Scan::latest()->first();
-        return view('scan', compact('scan'));
+        return view('scan', [
+            'fileName' => session('fileName'),
+            'citation' => session('citation'),
+            'summary' => session('summary'),
+            'recommendations' => session('recommendations'),
+        ]);
     }
 
-    public function store(Request $request, OpenAIService $openai)
+    public function store(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:pdf|max:5120', // Max 5MB
+            'file' => 'required|mimes:pdf|max:5120',
         ]);
 
-        // Store uploaded file locally
-        $uploadedFile = $request->file('file');
-        $fileName = time() . '_' . Str::slug(pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME)) . '.pdf';
-        $filePath = $uploadedFile->storeAs('scans', $fileName, 'spaces');
-        $fileUrl = Storage::disk('spaces')->url($filePath);
+        // Simulate file processing
+        $file = $request->file('file');
+        $fileName = $file->getClientOriginalName();
 
-        // Upload to OpenAI
-        $openaiFileId = $openai->uploadFile(storage_path("app/public/{$filePath}"), $fileName);
+        // Simulated outputs
+        $citation = "Beer, M., & Nohria, N. (2000). Cracking the Code of Change. Harvard Business Review.";
+        $summary = "The paper contrasts Theory E and Theory O in change management, advocating for an integrated approach.";
+        $recommendations = <<<TEXT
+📘 JOURNAL ARTICLES:
+1. Kotter, J. P. (1995). Leading Change: Why Transformation Efforts Fail.
+2. Nadler, D. A., & Tushman, M. L. (1997). Competing by Design.
 
-        // Parse PDF (optional - simplified: just use dummy excerpt)
-        $text = "Cracking the Code of Change by Michael Beer and Nitin Nohria (2000)..."; // Replace with actual PDF parsing if needed
+📚 BOOKS:
+1. Kotter, J. P. (2012). Leading Change.
+2. Collins, J., & Porras, J. (2004). Built to Last.
+TEXT;
 
-        // Get metadata
-        $meta = $openai->extractMetadata($text);
-        $citation = null;
-        $summary = null;
-
-        if (isset($meta['metadata'])) {
-            $citation = $this->extractCitation($meta['metadata']);
-            $summary = $this->extractSummary($meta['metadata']);
-        }
-
-        // Get recommendations
-        $recs = $openai->getRecommendations($summary ?? $text);
-        $recommendations = $recs['recommendations'] ?? null;
-
-        // Save scan to database
-        $scan = Scan::create([
-            'user_id' => auth()->id(),
-            'file_name' => $fileName,
-            'file_path' => $filePath,
-            'openai_file_id' => $openaiFileId,
+        return redirect()->route('scan.index')->with([
+            'fileName' => $fileName,
             'citation' => $citation,
             'summary' => $summary,
             'recommendations' => $recommendations,
         ]);
-
-        return redirect()->route('scan.index');
-    }
-
-    private function extractCitation(string $text): ?string
-    {
-        if (preg_match('/(?<citation>.+?\(\d{4}\).+?\.)/', $text, $match)) {
-            return $match['citation'];
-        }
-
-        return null;
-    }
-
-    private function extractSummary(string $text): ?string
-    {
-        $lines = explode("\n", trim($text));
-        $filtered = array_filter($lines, fn($line) => !str_contains($line, 'Citation'));
-
-        return implode(" ", array_slice($filtered, 1));
     }
 }
