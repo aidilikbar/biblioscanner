@@ -25,7 +25,7 @@
             <p class="text-sm text-gray-700 mt-2"><strong>📝 Summary:</strong> {{ session('summary') }}</p>
             <div class="mt-4">
                 <strong>📚 Recommendations:</strong>
-                <pre class="bg-white text-sm mt-2 p-4 rounded border whitespace-pre-wrap overflow-x-auto break-words">{{ session('recommendations') }}</pre>
+                <div class="bg-white text-sm mt-2 p-4 rounded border whitespace-pre-wrap overflow-x-auto break-words">{!! session('recommendations') !!}</div>
             </div>
         </div>
     @endif
