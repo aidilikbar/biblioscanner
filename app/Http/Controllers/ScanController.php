@@ -28,7 +28,7 @@ class ScanController extends Controller
 
         // Simulated outputs
         $citation = "Beer, M., & Nohria, N. (2000). Cracking the code of change. Harvard Business Review, 78(3), 133–141. https://hbr.org/2000/05/cracking-the-code-of-change";
-        $summary = "The paper contrasts Theory E and Theory O in change management, advocating for an integrated approach.";
+        $summary = "The paper explores the contrasting approaches of Theory E (focused on economic value and top-down change) and Theory O (centered on organizational capability and employee engagement) in managing change. It advocates for an integrated strategy that leverages the strengths of both models to achieve sustainable transformation.";
         $recommendations = <<<TEXT
 📘 JOURNAL ARTICLES:
 <strong>1. Kotter, J. P. (1995). Leading change: Why transformation efforts fail. Harvard Business Review, 73(2), 59–67.</strong>
