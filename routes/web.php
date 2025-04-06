@@ -21,4 +21,8 @@ Route::middleware('auth')->group(function () {
 Route::get('/', [ScanController::class, 'index'])->name('scan.index');
 Route::post('/', [ScanController::class, 'store'])->name('scan.store');
 
+Route::get('/test', function () {
+    return view('test-livewire');
+});
+
 require __DIR__.'/auth.php';
