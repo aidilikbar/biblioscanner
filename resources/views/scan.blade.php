@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto mt-10">
-    <h1 class="text-2xl font-bold mb-6">📚 BiblioScanner</h1>
+    <h1 class="text-2xl font-bold mb-6">📚 <strong>BiblioScanner</strong> - Discover more</h1>
 
     <form action="{{ route('scan.store') }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded shadow">
         @csrf
