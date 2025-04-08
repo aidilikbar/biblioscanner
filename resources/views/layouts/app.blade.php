@@ -11,6 +11,19 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        <!-- Favicons -->
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('images/biblioscanner-logo.png') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/biblioscanner-logo.png') }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/biblioscanner-logo.png') }}">
+        <link rel="manifest" href="{{ asset('images/biblioscanner-logo.png') }}">
+        <link rel="mask-icon" href="{{ asset('images/biblioscanner-logo.png') }}" color="#5bbad5">
+        <meta name="msapplication-TileColor" content="#000000">
+        <meta name="theme-color" content="#ffffff">
+        <meta name="description" content="BiblioScanner - Discover more from your academic PDFs.">
+        <meta name="keywords" content="BiblioScanner, academic, PDF, scanner, recommendations, citation, summary">
+        <meta name="author" content="Aidil Ikbar">
+        <link rel="icon" href="{{ asset('images/biblioscanner-logo.png') }}" type="image/png">
+
         <!-- Fontawesome -->
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
 
