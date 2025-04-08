@@ -5,8 +5,8 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ url('/scan') }}">
-                        <img src="{{ asset('images/biblioscanner-logo.png') }}" alt="BiblioScanner Logo" class="h-8 w-8 mr-2">
+                    <a href="{{ url('/scan') }}" class="flex items-center space-x-2">
+                        <img src="{{ asset('images/biblioscanner-logo.png') }}" alt="BiblioScanner Logo" class="h-8 w-8">
                         <span class="font-bold text-lg">BiblioScanner</span>
                     </a>
                 </div>
