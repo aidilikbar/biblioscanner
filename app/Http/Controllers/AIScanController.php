@@ -23,26 +23,32 @@ class AIScanController extends Controller
         ]);
 
         $uploadedFile = $request->file('file');
-        $fileName = time() . '_' . Str::slug($uploadedFile->getClientOriginalName()) . '.pdf';
-        $path = $uploadedFile->storeAs('aiscan_uploads', $fileName);
-        $localPath = storage_path("app/{$path}");
 
-        // Extract actual text from the uploaded PDF
-        $parser = new Parser();
-        $pdf = $parser->parseFile($localPath);
-        $excerpt = substr($pdf->getText(), 0, 2000); // Limit to first 2000 characters to keep it concise
+        try {
+            // ✅ Use temp file path (safe for PaaS like App Platform)
+            $tempPath = $uploadedFile->getRealPath();
 
-        // Upload to OpenAI and get metadata
-        $openaiFileId = $openai->uploadFile($localPath, $fileName);
-        $meta = $openai->extractMetadata($excerpt);
-        $citation = static::extractCitation($meta['metadata'] ?? '');
-        $summary = static::extractSummary($meta['metadata'] ?? '');
+            $parser = new Parser();
+            $pdf = $parser->parseFile($tempPath);
+            $excerpt = substr($pdf->getText(), 0, 2000);
 
-        $recs = $openai->getRecommendations($summary ?? $excerpt);
-        $recommendationsRaw = $recs['recommendations'] ?? '';
-        $recommendations = preg_split('/\r\n|\r|\n/', trim($recommendationsRaw));
+            $openaiFileId = $openai->uploadFile($tempPath, $uploadedFile->getClientOriginalName());
+            $meta = $openai->extractMetadata($excerpt);
+            $citation = $this->extractCitation($meta['metadata'] ?? '');
+            $summary = $this->extractSummary($meta['metadata'] ?? '');
+            $recommendations = $openai->getRecommendations($summary)['recommendations'] ?? [];
 
-        return view('aiscan.result', compact('fileName', 'citation', 'summary', 'recommendations'));
+            return view('aiscan.result', [
+                'fileName' => $uploadedFile->getClientOriginalName(),
+                'citation' => $citation,
+                'summary' => $summary,
+                'recommendations' => $recommendations
+            ]);
+
+        } catch (\Throwable $e) {
+            \Log::error('❌ AI Scan Error', ['message' => $e->getMessage()]);
+            return back()->with('error', 'Something went wrong while scanning the file.');
+        }
     }
 
     private static function extractCitation(string $text): ?string
