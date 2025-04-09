@@ -15,7 +15,7 @@ class AIScanController extends Controller
 
     public function scan(Request $request, OpenAIService $openai)
     {
-        \Log::info('🧠 AI Scan triggered');
+        dd($request->file('file'));
 
         $request->validate([
             'file' => 'required|mimes:pdf|max:5120',
