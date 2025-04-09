@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto mt-10">
-    <h1 class="text-2xl font-bold mb-6">📚 AI-Powered BiblioScanner</h1>
+    <h1 class="text-2xl font-bold mb-6"><i class="fas fa-book-open text-indigo-600"></i> AI-Powered BiblioScanner</h1>
 
     <form action="{{ route('aiscan.scan') }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded shadow">
         @csrf
