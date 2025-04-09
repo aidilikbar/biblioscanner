@@ -3,10 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
 use App\Services\OpenAIService;
-use App\Models\Scan;
 use Smalot\PdfParser\Parser;
 
 class AIScanController extends Controller
@@ -23,35 +20,42 @@ class AIScanController extends Controller
         ]);
 
         $uploadedFile = $request->file('file');
+        $originalName = $uploadedFile->getClientOriginalName();
 
         try {
-            // ✅ Use temp file path (safe for PaaS like App Platform)
+            // ✅ Get the real temporary path instead of storing the file
             $tempPath = $uploadedFile->getRealPath();
 
+            // ✅ Parse the PDF directly from the temp file
             $parser = new Parser();
             $pdf = $parser->parseFile($tempPath);
             $excerpt = substr($pdf->getText(), 0, 2000);
 
-            $openaiFileId = $openai->uploadFile($tempPath, $uploadedFile->getClientOriginalName());
+            // ✅ Upload file to OpenAI (for embeddings / metadata)
+            $openaiFileId = $openai->uploadFile($tempPath, $originalName);
+
+            // ✅ Extract metadata (summary & citation)
             $meta = $openai->extractMetadata($excerpt);
             $citation = $this->extractCitation($meta['metadata'] ?? '');
             $summary = $this->extractSummary($meta['metadata'] ?? '');
-            $recommendations = $openai->getRecommendations($summary)['recommendations'] ?? [];
+
+            // ✅ Get recommended readings
+            $recs = $openai->getRecommendations($summary ?? $excerpt);
+            $recommendations = $recs['recommendations'] ?? [];
 
             return view('aiscan.result', [
-                'fileName' => $uploadedFile->getClientOriginalName(),
+                'fileName' => $originalName,
                 'citation' => $citation,
                 'summary' => $summary,
-                'recommendations' => $recommendations
+                'recommendations' => $recommendations,
             ]);
-
         } catch (\Throwable $e) {
             \Log::error('❌ AI Scan Error', ['message' => $e->getMessage()]);
             return back()->with('error', 'Something went wrong while scanning the file.');
         }
     }
 
-    private static function extractCitation(string $text): ?string
+    private function extractCitation(string $text): ?string
     {
         if (preg_match('/(?<citation>.+?\(\d{4}\).+?\.)/', $text, $match)) {
             return $match['citation'];
@@ -60,10 +64,10 @@ class AIScanController extends Controller
         return null;
     }
 
-    private static function extractSummary(string $text): ?string
+    private function extractSummary(string $text): ?string
     {
         $lines = explode("\n", trim($text));
         $filtered = array_filter($lines, fn($line) => !str_contains($line, 'Citation'));
-        return implode(" ", array_slice($filtered, 0, 5)); // Limit summary to 5 lines
+        return implode(" ", array_slice($filtered, 1));
     }
 }
