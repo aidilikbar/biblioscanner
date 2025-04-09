@@ -3,8 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use App\Services\OpenAIService;
-use Smalot\PdfParser\Parser;
 
 class AIScanController extends Controller
 {
@@ -19,23 +20,38 @@ class AIScanController extends Controller
             'file' => 'required|mimes:pdf|max:5120',
         ]);
 
-        $tempPath = $request->file('file')->getRealPath();
-        $parser = new Parser();
+        $file = $request->file('file');
+        $fileName = time() . '_' . Str::slug($file->getClientOriginalName()) . '.pdf';
+        $path = $file->storeAs('uploads', $fileName, 'local');
+        $localPath = storage_path('app/' . $path);
 
-        $content = file_get_contents($tempPath); // safer than parseFile()
-        $pdf = $parser->parseContent($content);
+        try {
+            // Upload to OpenAI
+            $openaiFileId = $openai->uploadFile($localPath, $fileName);
 
-        $excerpt = substr($pdf->getText(), 0, 2000);
+            // Dummy excerpt (you can later replace with PDF parser)
+            $excerpt = "Cracking the Code of Change by Michael Beer and Nitin Nohria...";
 
-        // Continue with OpenAI logic...
-        $metadata = $openai->analyze($excerpt);
+            // Metadata
+            $meta = $openai->extractMetadata($excerpt);
+            $citation = $this->extractCitation($meta['metadata'] ?? '');
+            $summary = $this->extractSummary($meta['metadata'] ?? '');
 
-        return view('aiscan.result', [
-            'fileName' => $request->file('file')->getClientOriginalName(),
-            'citation' => $metadata['citation'] ?? null,
-            'summary' => $metadata['summary'] ?? null,
-            'recommendations' => $metadata['recommendations'] ?? [],
-        ]);
+            // Recommendations
+            $recs = $openai->getRecommendations($summary ?? $excerpt);
+            $recommendations = $recs['recommendations'] ?? [];
+
+            return view('aiscan.result', [
+                'fileName' => $fileName,
+                'citation' => $citation ?? 'Not found',
+                'summary' => $summary ?? 'Not found',
+                'recommendations' => is_array($recommendations) ? $recommendations : [],
+            ]);
+
+        } catch (\Throwable $e) {
+            logger('❌ AI Scan Error', ['message' => $e->getMessage()]);
+            return back()->withErrors(['file' => 'Error during AI scan.']);
+        }
     }
 
     private function extractCitation(string $text): ?string
@@ -43,7 +59,6 @@ class AIScanController extends Controller
         if (preg_match('/(?<citation>.+?\(\d{4}\).+?\.)/', $text, $match)) {
             return $match['citation'];
         }
-
         return null;
     }
 
