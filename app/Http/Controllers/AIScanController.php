@@ -15,46 +15,26 @@ class AIScanController extends Controller
 
     public function scan(Request $request, OpenAIService $openai)
     {
-        dd($request->file('file'));
-
         $request->validate([
             'file' => 'required|mimes:pdf|max:5120',
         ]);
 
-        $uploadedFile = $request->file('file');
-        $originalName = $uploadedFile->getClientOriginalName();
+        $tempPath = $request->file('file')->getRealPath();
 
-        try {
-            // ✅ Get the real temporary path instead of storing the file
-            $tempPath = $uploadedFile->getRealPath();
+        // Extract text using PDF parser
+        $parser = new Parser();
+        $pdf = $parser->parseFile($tempPath);
+        $excerpt = substr($pdf->getText(), 0, 2000); // Optional: limit for prompt size
 
-            // ✅ Parse the PDF directly from the temp file
-            $parser = new Parser();
-            $pdf = $parser->parseFile($tempPath);
-            $excerpt = substr($pdf->getText(), 0, 2000);
+        // Continue with OpenAI logic...
+        $metadata = $openai->analyze($excerpt);
 
-            // ✅ Upload file to OpenAI (for embeddings / metadata)
-            $openaiFileId = $openai->uploadFile($tempPath, $originalName);
-
-            // ✅ Extract metadata (summary & citation)
-            $meta = $openai->extractMetadata($excerpt);
-            $citation = $this->extractCitation($meta['metadata'] ?? '');
-            $summary = $this->extractSummary($meta['metadata'] ?? '');
-
-            // ✅ Get recommended readings
-            $recs = $openai->getRecommendations($summary ?? $excerpt);
-            $recommendations = $recs['recommendations'] ?? [];
-
-            return view('aiscan.result', [
-                'fileName' => $originalName,
-                'citation' => $citation,
-                'summary' => $summary,
-                'recommendations' => $recommendations,
-            ]);
-        } catch (\Throwable $e) {
-            \Log::error('❌ AI Scan Error', ['message' => $e->getMessage()]);
-            return back()->with('error', 'Something went wrong while scanning the file.');
-        }
+        return view('aiscan.result', [
+            'fileName' => $request->file('file')->getClientOriginalName(),
+            'citation' => $metadata['citation'] ?? null,
+            'summary' => $metadata['summary'] ?? null,
+            'recommendations' => $metadata['recommendations'] ?? [],
+        ]);
     }
 
     private function extractCitation(string $text): ?string
