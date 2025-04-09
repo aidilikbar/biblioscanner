@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScanController;
+use App\Http\Controllers\AIScanController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,6 +32,9 @@ Route::post('/', [ScanController::class, 'store'])->name('scan.store');
 
 Route::get('/scan', [ScanController::class, 'index'])->name('scan.index');
 Route::post('/scan', [ScanController::class, 'store'])->name('scan.store');
+
+Route::get('/aiscan', [AIScanController::class, 'index'])->name('aiscan.index');
+Route::post('/aiscan', [AIScanController::class, 'scan'])->name('aiscan.scan');
 
 Route::get('/test', function () {
     return view('test-livewire');
