@@ -24,7 +24,9 @@
             <div class="mt-4">
                 <strong>📚 Recommendations:</strong>
                 <div class="bg-gray-100 p-4 mt-2 rounded whitespace-pre-wrap text-sm text-gray-800">
-                    {!! nl2br(e($recommendations ?? 'No recommendations')) !!}
+                @foreach ($recommendations as $rec)
+                    <li>{{ $rec }}</li>
+                @endforeach
                 </div>
             </div>
         @endif
