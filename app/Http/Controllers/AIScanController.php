@@ -20,11 +20,12 @@ class AIScanController extends Controller
         ]);
 
         $tempPath = $request->file('file')->getRealPath();
-
-        // Extract text using PDF parser
         $parser = new Parser();
-        $pdf = $parser->parseFile($tempPath);
-        $excerpt = substr($pdf->getText(), 0, 2000); // Optional: limit for prompt size
+
+        $content = file_get_contents($tempPath); // safer than parseFile()
+        $pdf = $parser->parseContent($content);
+
+        $excerpt = substr($pdf->getText(), 0, 2000);
 
         // Continue with OpenAI logic...
         $metadata = $openai->analyze($excerpt);
