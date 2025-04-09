@@ -3,60 +3,58 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Smalot\PdfParser\Parser;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 use App\Services\OpenAIService;
+use App\Models\Scan;
 
 class AIScanController extends Controller
 {
-    protected $openai;
-
-    public function __construct(OpenAIService $openai)
-    {
-        $this->openai = $openai;
-    }
-
     public function index()
     {
         return view('aiscan.index');
     }
 
-    public function scan(Request $request)
+    public function scan(Request $request, OpenAIService $openai)
     {
         $request->validate([
             'file' => 'required|mimes:pdf|max:5120',
         ]);
 
-        try {
-            // Get the uploaded temp file path
-            $tempPath = $request->file('file')->getRealPath();
+        $uploadedFile = $request->file('file');
+        $fileName = time() . '_' . Str::slug($uploadedFile->getClientOriginalName()) . '.pdf';
+        $path = $uploadedFile->storeAs('aiscan_uploads', $fileName);
 
-            // Extract text using PDF parser
-            $parser = new Parser();
-            $pdf = $parser->parseFile($tempPath);
-            $excerpt = substr($pdf->getText(), 0, 2000); // Limit for safety
+        $localPath = storage_path("app/{$path}");
 
-        } catch (\Exception $e) {
-            // If parsing fails, fallback to a dummy string for demo
-            $excerpt = "Cracking the Code of Change by Michael Beer and Nitin Nohria...";
+        // Upload to OpenAI and get metadata
+        $openaiFileId = $openai->uploadFile($localPath, $fileName);
+
+        $excerpt = "Cracking the Code of Change by Michael Beer and Nitin Nohria...";
+
+        $meta = $openai->extractMetadata($excerpt);
+        $citation = static::extractCitation($meta['metadata'] ?? '');
+        $summary = static::extractSummary($meta['metadata'] ?? '');
+        $recs = $openai->getRecommendations($summary ?? $excerpt);
+        $recommendationsRaw = $recs['recommendations'] ?? '';
+        $recommendations = preg_split('/\r\n|\r|\n/', trim($recommendationsRaw));
+
+        return view('aiscan.result', compact('fileName', 'citation', 'summary', 'recommendations'));
+    }
+
+    private static function extractCitation(string $text): ?string
+    {
+        if (preg_match('/(?<citation>.+?\(\d{4}\).+?\.)/', $text, $match)) {
+            return $match['citation'];
         }
 
-        // Call OpenAI for citation/summary/recommendation
-        $metadata = $this->openai->analyze($excerpt);
+        return null;
+    }
 
-        // Normalize recommendations into array
-        $recommendationsRaw = $metadata['recommendations'] ?? null;
-        $recommendations = [];
-
-        if ($recommendationsRaw) {
-            $recommendations = preg_split('/\r\n|\r|\n|\• /', trim($recommendationsRaw));
-            $recommendations = array_filter(array_map('trim', $recommendations));
-        }
-
-        return view('aiscan.result', [
-            'fileName' => $request->file('file')->getClientOriginalName(),
-            'citation' => $metadata['citation'] ?? null,
-            'summary' => $metadata['summary'] ?? null,
-            'recommendations' => $recommendations,
-        ]);
+    private static function extractSummary(string $text): ?string
+    {
+        $lines = explode("\n", trim($text));
+        $filtered = array_filter($lines, fn($line) => !str_contains($line, 'Citation'));
+        return implode(" ", array_slice($filtered, 1));
     }
 }
