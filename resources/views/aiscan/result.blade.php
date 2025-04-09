@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto mt-10">
-    <h1 class="text-2xl font-bold mb-6">📚 AI Scanner</h1>
+    <h1 class="text-2xl font-bold mb-6">📚 AI Powered BiblioScanner</h1>
 
     <form action="{{ route('aiscan.scan') }}" method="POST" enctype="multipart/form-data" class="bg-white p-6 rounded shadow">
         @csrf
@@ -23,11 +23,9 @@
         @if (!empty($recommendations) && is_iterable($recommendations))
             <div class="mt-4">
                 <strong>📚 Recommendations:</strong>
-                <ul class="list-disc list-inside mt-2 text-sm text-gray-800">
-                    @foreach ($recommendations as $rec)
-                        <li>{{ $rec }}</li>
-                    @endforeach
-                </ul>
+                <div class="bg-gray-100 p-4 mt-2 rounded whitespace-pre-wrap text-sm text-gray-800">
+                    {!! nl2br(e($recommendations ?? 'No recommendations')) !!}
+                </div>
             </div>
         @endif
     </div>
