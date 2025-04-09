@@ -35,7 +35,9 @@ class AIScanController extends Controller
         $meta = $openai->extractMetadata($excerpt);
         $citation = static::extractCitation($meta['metadata'] ?? '');
         $summary = static::extractSummary($meta['metadata'] ?? '');
-        $recommendations = $openai->getRecommendations($summary ?? $excerpt)['recommendations'] ?? [];
+        $recs = $openai->getRecommendations($summary ?? $excerpt);
+        $recommendationsRaw = $recs['recommendations'] ?? '';
+        $recommendations = preg_split('/\r\n|\r|\n/', trim($recommendationsRaw));
 
         return view('aiscan.result', compact('fileName', 'citation', 'summary', 'recommendations'));
     }

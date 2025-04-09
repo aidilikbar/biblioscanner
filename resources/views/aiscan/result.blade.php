@@ -9,7 +9,7 @@
         <p class="text-sm text-gray-700 mt-2"><strong>📌 Citation:</strong> {{ $citation ?? 'Not found' }}</p>
         <p class="text-sm text-gray-700 mt-2"><strong>📝 Summary:</strong> {{ $summary ?? 'Not found' }}</p>
 
-        @if (!empty($recommendations))
+        @if (!empty($recommendations) && is_iterable($recommendations))
             <div class="mt-4">
                 <strong>📚 Recommendations:</strong>
                 <ul class="list-disc list-inside mt-2 text-sm text-gray-800">
